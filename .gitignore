@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Local vector DB / memory artifacts
+memory_vault/
+*.db
+*.sqlite
+chroma_db/
+
+# Docker
+.docker/
+
+# Node (if frontend added later)
+node_modules/
+.next/
+out/
+
+# Jupyter
+.ipynb_checkpoints/

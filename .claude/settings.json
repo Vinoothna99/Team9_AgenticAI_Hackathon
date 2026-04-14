@@ -1,0 +1,57 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)", "Bash(git *)",
+      "Edit(src/**)", "Edit(prisma/**)"
+    ],
+    "deny": ["Edit(.env)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat | jq -r '.tool_input.file_path // empty' | xargs -I{} npx prettier --write '{}' 2>/dev/null; true"
+          }
+        ]
+      }
+    ],
+    /*
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude has finished\" with title \"Claude Code\" sound name \"Glass\"'"
+          }
+        ]
+      }
+    ],
+    */
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat | jq -r '.tool_input.file_path // empty' | grep -qE '^\\.env$|credentials|secrets' && echo 'BLOCKED: Cannot edit secrets files' && exit 1; true"
+          }
+        ]
+      }
+    ]
+  },
+
+  "mcpServers":{
+    "postgres":{
+        "command": "npx",
+        "args": ["-y","@anthropic/mcp-postgres","postgressql://localhost:5432/mydb"]
+    },
+    "github":{
+        "command": "npx",
+        "args": ["-y","@anthropic/mcp-github"],
+        "env": { "GITHUB_TOKEN" : "..."}
+    }
+  }
+}
