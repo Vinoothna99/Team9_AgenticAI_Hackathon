@@ -56,7 +56,26 @@ VaultAI acts like a **Family Office in your pocket**. It is an agentic workflow 
 
 The stack is built in phases, adding complexity only as the core loop is validated.
 
-### Phase 1 — Core Agent Loop (Week 1–2)
+### Phase 1 — Frontend & Integration (Phase-1)
+Wire a UI to the backend so the demo is showable to judges.
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Backend API | FastAPI | Lightweight, async, easy to document |
+| Frontend | TBD | To be decided by frontend lead |
+| Containerization | Docker + Docker Compose | All services (agent, memory, API) run in isolated containers on the user's machine—raw financial data never leaves the local environment |
+| Deployment | Local Docker (no cloud) | Privacy constraint; only outbound traffic is LLM API calls and Tavily search |
+
+### Phase 2 — Persistent Memory (Phase 2)
+Swap temp JSON for a real local vector store once the agent flow is proven.
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Long-Term Memory | ChromaDB (local) | Runs fully on-device; no cloud dependency |
+| Embeddings | sentence-transformers | Local model, no API call needed |
+
+
+### Phase 3 — Core Agent Loop (Phase 3)
 Get the basic agent talking to the LLM and calling tools. No masking yet.
 
 | Layer | Choice | Reason |
@@ -68,25 +87,7 @@ Get the basic agent talking to the LLM and calling tools. No masking yet.
 | Web Search | Tavily API | Purpose-built for AI agents; structured results |
 | Forecaster | Python + Pandas | Deterministic function, called as a tool |
 
-### Phase 2 — Persistent Memory (Week 2–3)
-Swap temp JSON for a real local vector store once the agent flow is proven.
-
-| Layer | Choice | Reason |
-|---|---|---|
-| Long-Term Memory | ChromaDB (local) | Runs fully on-device; no cloud dependency |
-| Embeddings | sentence-transformers | Local model, no API call needed |
-
-### Phase 3 — Frontend & Integration (Week 3–4)
-Wire a UI to the backend so the demo is showable to judges.
-
-| Layer | Choice | Reason |
-|---|---|---|
-| Backend API | FastAPI | Lightweight, async, easy to document |
-| Frontend | TBD | To be decided by frontend lead |
-| Containerization | Docker + Docker Compose | All services (agent, memory, API) run in isolated containers on the user's machine—raw financial data never leaves the local environment |
-| Deployment | Local Docker (no cloud) | Privacy constraint; only outbound traffic is LLM API calls and Tavily search |
-
-### Phase 4 — Privacy Shield (Week 4, do last)
+### Phase 4 — Privacy Shield (Phase 4)
 Per mentor guidance: implement PII masking last, after all flows are validated on clean data.
 
 | Layer | Choice | Reason |
