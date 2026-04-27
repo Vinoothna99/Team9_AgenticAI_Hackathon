@@ -1,6 +1,6 @@
 # VaultAI — The Zero-Knowledge Wealth Copilot
 
-> A 365-day, highly personalized financial AI agent that proactively manages your taxes, budget, and investments—without ever letting your raw bank data touch the cloud.
+> A local-first financial AI agent that proactively manages your taxes, budget, and investments — without ever letting your raw financial data touch the cloud.
 
 ---
 
@@ -8,90 +8,154 @@
 
 | Pain Point | Description |
 |---|---|
-| **The Trust Gap** | People want AI to manage their money, but fear uploading raw bank statements or transaction history to the cloud. |
-| **Goldfish Memory** | Current AI bots forget who you are when you close the tab. Real financial planning requires 365 days of context—e.g., remembering you had a baby in February to claim a tax credit in April. |
+| **The Trust Gap** | People want AI to manage their money, but fear uploading raw bank statements to the cloud. |
+| **Goldfish Memory** | Current AI bots forget who you are when you close the tab. Real financial planning requires 365 days of context — remembering you had a baby in February to claim a tax credit in April. |
 
 ---
 
 ## The Solution
 
-VaultAI acts like a **Family Office in your pocket**. It is an agentic workflow that runs primarily on the user's local machine (for privacy) while using a cloud LLM only for reasoning—never for storing raw data.
+VaultAI acts like a **Family Office in your pocket**. It runs entirely on your local machine — using a cloud LLM only for reasoning, never for storing raw data.
 
 **The agent does three things autonomously:**
 
 1. **Sanitizes Data** — strips PII from statements before the AI ever sees them
-2. **Builds a 365-Day Profile** — extracts life events and financial goals from casual chat and persists them to a local long-term memory vault
-3. **Executes Wealth Strategies** — runs deterministic forecasting code, searches the web for live tax-code updates, and recommends exact investment actions
+2. **Builds a 365-Day Profile** — extracts life events and financial goals from casual chat, persists them to a local memory vault
+3. **Executes Wealth Strategies** — runs deterministic forecasting, searches the web for live tax-code updates, and recommends exact financial actions
+
+---
+
+## System Architecture
+
+```
+User Input (raw text / CSV)
+         │
+         ▼
+┌─────────────────────────────┐
+│  Layer 1: PII Masker        │  LOCAL — no network
+│  "John Smith" → PERSON_001  │
+│  "****1234"  → ACCT_001     │
+└────────────┬────────────────┘
+             │ masked data only
+             ▼
+┌─────────────────────────────┐
+│  Layer 2: Memory Retrieval  │  LOCAL — no network
+│  SQLite  → user profile,    │
+│            life events,     │
+│            financial history│
+│  ChromaDB → relevant past   │
+│             conversations   │
+└────────────┬────────────────┘
+             │ context package (masked)
+             ▼
+┌─────────────────────────────┐
+│  Layer 3: LLM Agent         │  CLOUD — only outbound call
+│  Sees: masked data + context│
+│  Decides: which tool to run │
+└────────────┬────────────────┘
+             │ tool call
+             ▼
+┌─────────────────────────────┐
+│  Layer 4: Tool Execution    │  LOCAL (Tavily = only exception)
+│  - Cash flow forecaster     │
+│  - Spending analyzer        │
+│  - Tax summarizer           │
+│  - Stock/rate search        │
+│  - Memory writer            │
+└────────────┬────────────────┘
+             │ result
+             ▼
+┌─────────────────────────────┐
+│  Layer 5: Memory Update     │  LOCAL — no network
+│  - Save to ChromaDB         │
+│  - Update SQLite            │
+│  - De-mask response         │
+└────────────┬────────────────┘
+             │
+             ▼
+        User sees response
+```
+
+**Privacy guarantee:** The PII masker has no network access. Raw financial data is physically incapable of leaving the machine — Docker enforces this at the network layer, not just by policy.
+
+---
+
+## Memory Architecture
+
+| Store | What it holds | Why |
+|---|---|---|
+| **SQLite** (`memory/vault.db`) | User profile, life events (with exact dates), monthly financial summaries, short-term conversation history | Precise queries — exact income figures, date-filtered life events |
+| **ChromaDB** (`memory/chroma_db/`) | Embedded long-term conversation history | Semantic recall — "baby" memory surfaces when user asks about "child tax credit" |
+
+Built with **SQLAlchemy** so swapping SQLite → PostgreSQL for multi-user is a one-line config change.
 
 ---
 
 ## Agent Tools
 
-| Tool | What It Does | Implementation |
+| Tool | What it does | Triggered when |
 |---|---|---|
-| **Privacy Shield** | Strips PII from uploaded CSV bank statements locally before any LLM call | Python regex / local script |
-| **Long-Term Memory** | Autonomously updates the user's Life Profile from chat context | Local vector DB (ChromaDB) or JSON vault |
-| **Real-Time Web Search** | Fetches current IRS tax codes, interest rates, and financial news | Tavily API |
-| **Cash Flow Forecaster** | Predicts next month's cash flow from the sanitized CSV | Deterministic Python / Pandas function (tool call, not LLM-generated code) |
-
-> **Mentor note:** The forecaster is implemented as a deterministic tool call—not LLM-generated code on the fly—for reliability and debuggability.
+| `search_web` | Live stocks, tax codes, interest rates (Tavily) | User asks about live market data |
+| `forecast_cashflow` | Next month prediction from CSV | User asks about future cash flow |
+| `analyze_spending` | Category breakdown from CSV | User asks where money went |
+| `prepare_tax_summary` | Pulls life events + income, compiles tax picture | User asks to prepare taxes |
+| `save_life_event` | Writes event to SQLite + ChromaDB | User mentions a life change |
+| `update_user_profile` | Updates income, job, goals in SQLite | User shares personal financial info |
 
 ---
 
 ## Demo Script: "The Time-Travel Demo"
 
-**January** — Upload a CSV. VaultAI sanitizes it locally (no PII leaves the machine). Agent notices heavy tech-gear spending and asks: *"Are you a freelancer? We can write this off."*
+**January** — Upload a CSV. VaultAI masks it locally (no PII leaves the machine). Agent notices heavy tech-gear spending and asks: *"Are you a freelancer? We can write this off."*
 
-**July** — User chats: *"I just had a baby girl!"* Agent silently writes `{"life_event": "new_child", "date": "2026-07"}` to the long-term memory vault.
+**July** — User chats: *"I just had a baby girl!"* Agent silently writes `{"life_event": "new_child", "date": "2026-07"}` to the local memory vault.
 
-**Next Tax Season** — User clicks "Prepare my Taxes." VaultAI:
-- Retrieves the July memory and surfaces the **$2,000 Child Tax Credit** automatically
-- Runs the forecaster and finds **$5,000 in surplus**
-- Calls Tavily to confirm **T-Bills at 5% yield**
-- Delivers a complete, sourced tax + investment recommendation
+**Next Tax Season** — User says: *"Prepare my taxes."* VaultAI:
+- Retrieves the July memory → surfaces the **$2,000 Child Tax Credit** automatically
+- Runs the forecaster → finds **$5,000 in surplus**
+- Calls Tavily → confirms **T-Bills at 5% yield**
+- Delivers a complete, sourced tax + investment plan
 
 ---
 
-## Tech Stack (Build Progression)
+## Tech Stack
 
-The stack is built in phases, adding complexity only as the core loop is validated.
-
-### Phase 1 — Core Agent Loop (Week 1–2)
-Get the basic agent talking to the LLM and calling tools. No masking yet.
-
+### Phase 1 — Core Agent Loop ✅
 | Layer | Choice | Reason |
 |---|---|---|
 | Language | Python 3.11+ | Pandas, scripting, AI ecosystem |
-| LLM | CanvasCloud.ai API | Hackathon-provided reasoning engine |
-| Agent Framework | TBD (LangGraph / raw API) | Evaluate during Phase 1 |
-| Memory (temp) | JSON file | Simple, no infrastructure needed |
-| Web Search | Tavily API | Purpose-built for AI agents; structured results |
-| Forecaster | Python + Pandas | Deterministic function, called as a tool |
+| LLM | Claude Haiku (Anthropic API) | Fast, cost-efficient reasoning |
+| Web Search | Tavily API | Purpose-built for AI agents |
+| Forecaster | Python + Pandas | Deterministic function, not LLM-generated code |
+| API | FastAPI | Lightweight, async |
+| Containerization | Docker + Docker Compose | All services run locally |
 
-### Phase 2 — Persistent Memory (Week 2–3)
-Swap temp JSON for a real local vector store once the agent flow is proven.
-
+### Phase 2 — Persistent Memory (Day 3)
 | Layer | Choice | Reason |
 |---|---|---|
-| Long-Term Memory | ChromaDB (local) | Runs fully on-device; no cloud dependency |
-| Embeddings | sentence-transformers | Local model, no API call needed |
+| Short-term memory | SQLite + SQLAlchemy | Precise queries, built into Python, upgradable to PostgreSQL |
+| Long-term memory | ChromaDB (local) | Semantic search, runs fully on-device |
+| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) | Local model, no API call needed |
 
-### Phase 3 — Frontend & Integration (Week 3–4)
-Wire a UI to the backend so the demo is showable to judges.
-
+### Phase 3 — Frontend (Day 4)
 | Layer | Choice | Reason |
 |---|---|---|
-| Backend API | FastAPI | Lightweight, async, easy to document |
-| Frontend | TBD | To be decided by frontend lead |
-| Containerization | Docker + Docker Compose | All services (agent, memory, API) run in isolated containers on the user's machine—raw financial data never leaves the local environment |
-| Deployment | Local Docker (no cloud) | Privacy constraint; only outbound traffic is LLM API calls and Tavily search |
+| Framework | React | Component-based, intermediate-friendly |
+| Styling | Tailwind CSS | Fast to build, no custom CSS needed |
+| Components | shadcn/ui | Pre-built chat, card, file-upload components |
 
-### Phase 4 — Privacy Shield (Week 4, do last)
-Per mentor guidance: implement PII masking last, after all flows are validated on clean data.
-
+### Phase 4 — Privacy Shield (last)
 | Layer | Choice | Reason |
 |---|---|---|
 | PII Masking | Python regex + UID mapping | Replace names/account numbers with stable UIDs before any LLM call |
+
+---
+
+## Frontend Screens
+
+**Chat (main screen)** — conversation interface with file upload
+**Dashboard** — income, expenses, net cash flow, spending breakdown, life events
+**CSV Upload** — drag-and-drop with local masking indicator
 
 ---
 
@@ -100,17 +164,26 @@ Per mentor guidance: implement PII masking last, after all flows are validated o
 ```
 /
 ├── README.md
-├── CLAUDE.md               # Claude Code project instructions
-├── Notes.md                # Team workflow and hackathon notes
-├── .env.example            # Required environment variables (copy to .env)
-├── docker-compose.yml      # Spins up all services locally
-├── participant-resources/  # Read-only hackathon reference material
+├── CLAUDE.md                   # Claude Code project instructions
+├── Notes.md                    # Team workflow notes
+├── .env.example                # Required environment variables
+├── docker-compose.yml
+├── requirements.txt
 └── src/
-    ├── agent/              # Core agent loop and tool definitions
-    ├── tools/              # Privacy shield, forecaster, search, memory
-    ├── memory/             # Long-term vault (ChromaDB or JSON)
-    └── api/                # FastAPI backend
-        └── Dockerfile
+    ├── agents/
+    │   └── agent.py            # Tool-use loop, memory wiring
+    ├── api/
+    │   ├── Dockerfile
+    │   ├── main.py
+    │   └── routes/
+    │       └── chat.py         # POST /chat endpoint
+    ├── tools/
+    │   ├── search.py           # Tavily web search
+    │   ├── forecaster.py       # Cash flow forecaster (deterministic)
+    │   └── pii_masker.py       # PII masking (Phase 4)
+    └── memory/
+        ├── store.py            # SQLite + ChromaDB wrapper
+        └── chroma_db/          # Local vector store (auto-created)
 ```
 
 ---
@@ -120,48 +193,61 @@ Per mentor guidance: implement PII masking last, after all flows are validated o
 Copy `.env.example` to `.env` and fill in your keys. **Never commit `.env`.**
 
 ```
-CANVASCLOUD_API_KEY=
+ANTHROPIC_API_KEY=
 TAVILY_API_KEY=
+```
+
+---
+
+## Running Locally
+
+```bash
+# Copy environment variables
+cp .env.example .env
+# Fill in your keys, then:
+
+docker compose up --build -d
+
+# Test the chat endpoint
+curl -s -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What are current T-Bill interest rates?"}' | python3 -m json.tool
 ```
 
 ---
 
 ## Build Order
 
-1. UI mockups — screens approved before coding starts
-2. Backend stubs — mock endpoints so frontend can integrate early
-3. AI pipeline — build and test agent flow in isolation
-4. Integration — wire everything together; rely on logs to debug
+| Day | Focus | Status |
+|---|---|---|
+| Day 1 | FastAPI backend, Docker, `/chat` endpoint | ✅ Done |
+| Day 2 | Agent tools: Tavily search + cash flow forecaster + tool-use loop | ✅ Done |
+| Day 3 | Persistent memory: SQLite + ChromaDB, solve goldfish memory | 🔄 In Progress |
+| Day 4 | Frontend: React + Tailwind + shadcn/ui, CSV upload endpoint | ⬜ Pending |
 
 ---
 
-## Team Roles
+## Future Scaling Roadmap
 
-| Role | Responsibility |
-|---|---|
-| Backend Engineer | APIs, data processing, AI endpoint integration |
-| AI/ML Engineer | Agent pipeline, prompts, embeddings, retrieval logic |
-| DevOps | Deployment, CI/CD, infrastructure |
-| Frontend Engineer | UI implementation, API wiring, UX |
+This MVP runs locally for a single user. The architecture is designed so each phase is a contained upgrade:
 
----
+| Phase | What changes | When |
+|---|---|---|
+| **Multi-device sync** | Optional encrypted cloud backup (client-side encryption — server holds blobs it cannot read) | After MVP validated |
+| **Multi-user** | Swap SQLite → PostgreSQL (one-line SQLAlchemy config change), add auth | After product-market fit |
+| **Better PII masking** | Swap regex → spaCy NLP model for higher accuracy | Phase 4+ |
+| **Zero-knowledge cloud** | PII masker runs in sandboxed container, only masked context reaches servers | Enterprise tier |
+| **Task execution** | Agent moves from giving advice to executing tasks (tax filing, investment allocation) | Requires regulatory review |
 
-## Week-by-Week Plan
-
-| Week | Focus |
-|---|---|
-| 1 | Define & Plan — PRD, roles, stack decisions, GitHub Projects |
-| 2 | Foundations — backend scaffolding, agent prototype, "hello world" deploy |
-| 3 | Integration Sprint — frontend + backend + AI connected, end-to-end tests |
-| 4 | Polish & Test — bug fixes, AI tuning, UX, user testing |
-| 5 | Demo Ready — rehearse 3x, judge prep, final build ship |
+**Privacy guarantee at scale:** The local-first architecture is the regulatory moat. We cannot comply with a data request for data we do not hold.
 
 ---
 
 ## Key Rules
 
 - API keys live in `.env` only — never in code or commits
+- The forecaster is a deterministic function — not LLM-generated code
+- PII masker runs before any LLM call — Claude never sees raw financial data
 - Cache LLM responses during dev to control cost
 - Log every AI request, response, latency, and error from day one
-- The forecaster is a deterministic function — not LLM-generated code
-- Masking is Phase 4 — validate flows on unmasked data first
+- Masking is Phase 4 — validate all flows on clean data first
