@@ -108,7 +108,8 @@ Built with **SQLAlchemy** so swapping SQLite → PostgreSQL for multi-user is a 
 
 **January** — Upload a CSV. VaultAI masks it locally (no PII leaves the machine). Agent notices heavy tech-gear spending and asks: *"Are you a freelancer? We can write this off."*
 
-**July** — User chats: *"I just had a baby girl!"* Agent silently writes `{"life_event": "new_child", "date": "2026-07"}` to the local memory vault.
+### Phase 1 — Frontend & Integration (Phase-1)
+Wire a UI to the backend so the demo is showable to judges.
 
 **Next Tax Season** — User says: *"Prepare my taxes."* VaultAI:
 - Retrieves the July memory → surfaces the **$2,000 Child Tax Credit** automatically
@@ -123,26 +124,36 @@ Built with **SQLAlchemy** so swapping SQLite → PostgreSQL for multi-user is a 
 ### Phase 1 — Core Agent Loop ✅
 | Layer | Choice | Reason |
 |---|---|---|
-| Language | Python 3.11+ | Pandas, scripting, AI ecosystem |
-| LLM | Claude Haiku (Anthropic API) | Fast, cost-efficient reasoning |
-| Web Search | Tavily API | Purpose-built for AI agents |
-| Forecaster | Python + Pandas | Deterministic function, not LLM-generated code |
-| API | FastAPI | Lightweight, async |
-| Containerization | Docker + Docker Compose | All services run locally |
+| Backend API | FastAPI | Lightweight, async, easy to document |
+| Frontend | TBD | To be decided by frontend lead |
+| Containerization | Docker + Docker Compose | All services (agent, memory, API) run in isolated containers on the user's machine—raw financial data never leaves the local environment |
+| Deployment | Local Docker (no cloud) | Privacy constraint; only outbound traffic is LLM API calls and Tavily search |
+
+### Phase 2 — Persistent Memory (Phase 2)
+Swap temp JSON for a real local vector store once the agent flow is proven.
 
 ### Phase 2 — Persistent Memory (Day 3)
 | Layer | Choice | Reason |
 |---|---|---|
-| Short-term memory | SQLite + SQLAlchemy | Precise queries, built into Python, upgradable to PostgreSQL |
-| Long-term memory | ChromaDB (local) | Semantic search, runs fully on-device |
-| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) | Local model, no API call needed |
+| Long-Term Memory | ChromaDB (local) | Runs fully on-device; no cloud dependency |
+| Embeddings | sentence-transformers | Local model, no API call needed |
+
+
+### Phase 3 — Core Agent Loop (Phase 3)
+Get the basic agent talking to the LLM and calling tools. No masking yet.
 
 ### Phase 3 — Frontend (Day 4)
 | Layer | Choice | Reason |
 |---|---|---|
-| Framework | React | Component-based, intermediate-friendly |
-| Styling | Tailwind CSS | Fast to build, no custom CSS needed |
-| Components | shadcn/ui | Pre-built chat, card, file-upload components |
+| Language | Python 3.11+ | Pandas, scripting, AI ecosystem |
+| LLM | CanvasCloud.ai API | Hackathon-provided reasoning engine |
+| Agent Framework | TBD (LangGraph / raw API) | Evaluate during Phase 1 |
+| Memory (temp) | JSON file | Simple, no infrastructure needed |
+| Web Search | Tavily API | Purpose-built for AI agents; structured results |
+| Forecaster | Python + Pandas | Deterministic function, called as a tool |
+
+### Phase 4 — Privacy Shield (Phase 4)
+Per mentor guidance: implement PII masking last, after all flows are validated on clean data.
 
 ### Phase 4 — Privacy Shield (last)
 | Layer | Choice | Reason |
