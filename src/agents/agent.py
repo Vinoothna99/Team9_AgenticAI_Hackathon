@@ -10,6 +10,7 @@ from src.memory.store import (
       getRecentHistory,                                                                                                                                                                                          
       recallSimilar,
   )
+from src.api.session import csvSession
 
 load_dotenv() 
 
@@ -34,12 +35,13 @@ tools =[
         "name" : "forecast",
         "description" : (
             "USE WHEN : user provides a CSV or asks about their spending, income, budget, or cash flow predictions.  "
-            "DO NOT USE WHEN :  no CSV has been provided in the conversation"
+            "The CSV is pre-loaded from their upload. "
+            "DO NOT USE WHEN :  no CSV has been uploaded this session"
         ),
         "input_schema" : {
             "type" : "object",
             "properties" : { "csv_text" : {"type": "string"} },
-            "required" : ["csv_text"]
+            "required" : []
         }
     },
 
@@ -67,7 +69,10 @@ def dispatchTool(toolName, toolInput):
     if toolName == "search":
         return search(toolInput["query"])
     if toolName == "forecast":
-        return forecast(toolInput["csv_text"])
+        csv_text = csvSession.get("csv_text") or toolInput.get("csv_text", "")
+        if not csv_text:
+            return "No CSV uploaded yet. Please upload a bank statement first."
+        return forecast(csv_text)
     if toolName == "saveLifeEvent":
           return saveLifeEvent(
             toolInput["eventType"],                                                                                                                                                                            
@@ -98,7 +103,7 @@ def runAgent(message:str) -> str:
         )                                                                                                                                                                       
                                                                                                                                                                                   
         if response.stop_reason == "end_turn":            
-            return response.content[0].text
+            reply = response.content[0].text
             saveConversationTurn("user", message)                                                                                                                                                              
             saveConversationTurn("assistant", reply)
             return reply  

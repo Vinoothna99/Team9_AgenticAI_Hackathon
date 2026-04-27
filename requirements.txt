@@ -6,3 +6,4 @@ sentence-transformers
 tavily-python
 python-dotenv
 anthropic
+python-multipart

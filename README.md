@@ -142,23 +142,18 @@ Swap temp JSON for a real local vector store once the agent flow is proven.
 ### Phase 3 — Core Agent Loop (Phase 3)
 Get the basic agent talking to the LLM and calling tools. No masking yet.
 
-### Phase 3 — Frontend (Day 4)
+### Phase 3 — Frontend (Day 4) ✅
 | Layer | Choice | Reason |
 |---|---|---|
-| Language | Python 3.11+ | Pandas, scripting, AI ecosystem |
-| LLM | CanvasCloud.ai API | Hackathon-provided reasoning engine |
-| Agent Framework | TBD (LangGraph / raw API) | Evaluate during Phase 1 |
-| Memory (temp) | JSON file | Simple, no infrastructure needed |
-| Web Search | Tavily API | Purpose-built for AI agents; structured results |
-| Forecaster | Python + Pandas | Deterministic function, called as a tool |
+| Framework | React 19 + Vite | Component-based, fast HMR |
+| Styling | Tailwind CSS v4 | Fast to build, no custom CSS needed |
+| Routing | React Router v7 | 3-screen SPA: Chat, Upload CSV, Dashboard |
 
-### Phase 4 — Privacy Shield (Phase 4)
-Per mentor guidance: implement PII masking last, after all flows are validated on clean data.
-
-### Phase 4 — Privacy Shield (last)
+### Phase 4 — Privacy Shield ✅
 | Layer | Choice | Reason |
 |---|---|---|
-| PII Masking | Python regex + UID mapping | Replace names/account numbers with stable UIDs before any LLM call |
+| PII Masking | Python regex + UID mapping | Strips account numbers, emails, phones, SSNs before any LLM call |
+| De-masking | Reverse lookup on response | UIDs swapped back before user sees the reply |
 
 ---
 
@@ -178,20 +173,34 @@ Per mentor guidance: implement PII masking last, after all flows are validated o
 ├── CLAUDE.md                   # Claude Code project instructions
 ├── Notes.md                    # Team workflow notes
 ├── .env.example                # Required environment variables
-├── docker-compose.yml
+├── docker-compose.yml          # api (8000) + frontend (3000)
 ├── requirements.txt
+├── frontend/                   # React 19 + Vite + Tailwind v4
+│   ├── Dockerfile              # Multi-stage Node build → nginx
+│   ├── nginx.conf              # SPA fallback + /api proxy
+│   ├── vite.config.ts          # Tailwind plugin, @ alias, /api proxy
+│   └── src/
+│       ├── App.tsx             # BrowserRouter + 3 routes
+│       ├── components/
+│       │   └── Nav.tsx         # Top nav with active-link highlighting
+│       └── pages/
+│           ├── Chat.tsx        # Message bubbles, POST /api/chat
+│           ├── Upload.tsx      # Drag-and-drop CSV, POST /api/upload-csv
+│           └── Dashboard.tsx   # Life events card, GET /api/life-events
 └── src/
     ├── agents/
-    │   └── agent.py            # Tool-use loop, memory wiring
+    │   └── agent.py            # Tool-use loop, memory wiring, CSV session
     ├── api/
     │   ├── Dockerfile
-    │   ├── main.py
+    │   ├── main.py             # CORS, all routers, /health, /life-events
+    │   ├── session.py          # Module-level CSV session state + lookup table
     │   └── routes/
-    │       └── chat.py         # POST /chat endpoint
+    │       ├── chat.py         # POST /chat — runs agent, de-masks response
+    │       └── upload.py       # POST /upload-csv — masks CSV, stores in session
     ├── tools/
     │   ├── search.py           # Tavily web search
     │   ├── forecaster.py       # Cash flow forecaster (deterministic)
-    │   └── pii_masker.py       # PII masking (Phase 4)
+    │   └── pii_masker.py       # Regex PII masking + de-masking
     └── memory/
         ├── store.py            # SQLite + ChromaDB wrapper
         └── chroma_db/          # Local vector store (auto-created)
@@ -213,16 +222,45 @@ TAVILY_API_KEY=
 ## Running Locally
 
 ```bash
-# Copy environment variables
+# 1. Copy environment variables
 cp .env.example .env
-# Fill in your keys, then:
+# Fill in ANTHROPIC_API_KEY and TAVILY_API_KEY, then:
 
+# 2. Run everything via Docker (API on :8000, frontend on :3000)
 docker compose up --build -d
 
-# Test the chat endpoint
+# 3. Open the app
+open http://localhost:3000
+```
+
+### Dev mode (without Docker)
+
+```bash
+# Backend
+pip install -r requirements.txt
+uvicorn src.api.main:app --port 8000
+
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev
+# → http://localhost:5173 (proxies /api/* to :8000)
+```
+
+### Quick API smoke test
+
+```bash
+# Health
+curl http://localhost:8000/health
+
+# Upload a CSV (PII gets masked before storage)
+curl -s -F "file=@test_data/amex_test.csv" http://localhost:8000/upload-csv
+
+# Chat (de-masked response returned to user)
 curl -s -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "What are current T-Bill interest rates?"}' | python3 -m json.tool
+  -d '{"message": "What are my top expenses?"}' | python3 -m json.tool
+
+# Life events saved from chat
+curl http://localhost:8000/life-events
 ```
 
 ---
@@ -233,8 +271,8 @@ curl -s -X POST http://localhost:8000/chat \
 |---|---|---|
 | Day 1 | FastAPI backend, Docker, `/chat` endpoint | ✅ Done |
 | Day 2 | Agent tools: Tavily search + cash flow forecaster + tool-use loop | ✅ Done |
-| Day 3 | Persistent memory: SQLite + ChromaDB, solve goldfish memory | 🔄 In Progress |
-| Day 4 | Frontend: React + Tailwind + shadcn/ui, CSV upload endpoint | ⬜ Pending |
+| Day 3 | Persistent memory: SQLite + ChromaDB, goldfish memory solved | ✅ Done |
+| Day 4 | Frontend: React + Tailwind, CSV upload, PII masker end-to-end | ✅ Done |
 
 ---
 
@@ -258,7 +296,6 @@ This MVP runs locally for a single user. The architecture is designed so each ph
 
 - API keys live in `.env` only — never in code or commits
 - The forecaster is a deterministic function — not LLM-generated code
-- PII masker runs before any LLM call — Claude never sees raw financial data
-- Cache LLM responses during dev to control cost
-- Log every AI request, response, latency, and error from day one
-- Masking is Phase 4 — validate all flows on clean data first
+- PII masker runs on every CSV upload before any data reaches the agent — Claude never sees raw account numbers, emails, or phone numbers
+- Masked UIDs (e.g. `ACCT_001`) are swapped back to originals in the response before the user sees them
+- camelCase for all Python function names (project convention)

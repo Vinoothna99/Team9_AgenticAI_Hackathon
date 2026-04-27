@@ -85,6 +85,8 @@ def getRecentHistory(n: int = 10) -> list[dict]:
 
 
 def recallSimilar(query: str, n: int = 3) -> list[str]:
+    if conversations.count() == 0:
+        return []
     results = conversations.query(query_texts=[query], n_results=n)
     return results["documents"][0] if results["documents"] else [] 
 
