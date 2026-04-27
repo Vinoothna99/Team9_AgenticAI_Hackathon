@@ -2,6 +2,14 @@
 
 > A local-first financial AI agent that proactively manages your taxes, budget, and investments — without ever letting your raw financial data touch the cloud.
 
+**Team VaultAI** — Agentic AI Hackathon 2026
+
+| Name | Role |
+|---|---|
+| Akshanth Mamidala | Backend Engineer |
+| Vinoothna Gangadasu | Product Manager |
+| Claude Sonnet 4.6 | Frontend Engineer |
+
 ---
 
 ## The Problem
@@ -236,11 +244,11 @@ open http://localhost:3000
 ### Dev mode (without Docker)
 
 ```bash
-# Backend
+# Backend (note: first start takes ~20s — ChromaDB loads the embedding model)
 pip install -r requirements.txt
 uvicorn src.api.main:app --port 8000
 
-# Frontend (separate terminal)
+# Frontend — open a second terminal
 cd frontend && npm install && npm run dev
 # → http://localhost:5173 (proxies /api/* to :8000)
 ```
@@ -267,12 +275,12 @@ curl http://localhost:8000/life-events
 
 ## Build Order
 
-| Day | Focus | Status |
+| Phase | Focus | Status |
 |---|---|---|
-| Day 1 | FastAPI backend, Docker, `/chat` endpoint | ✅ Done |
-| Day 2 | Agent tools: Tavily search + cash flow forecaster + tool-use loop | ✅ Done |
-| Day 3 | Persistent memory: SQLite + ChromaDB, goldfish memory solved | ✅ Done |
-| Day 4 | Frontend: React + Tailwind, CSV upload, PII masker end-to-end | ✅ Done |
+| Phase 1 | FastAPI backend, Docker, `/chat` endpoint | ✅ Done |
+| Phase 2 | Agent tools: Tavily search + cash flow forecaster + tool-use loop | ✅ Done |
+| Phase 3 | Persistent memory: SQLite + ChromaDB, goldfish memory solved | ✅ Done |
+| Phase 4 | Frontend: React + Tailwind, CSV upload, PII masker end-to-end | ✅ Done |
 
 ---
 
@@ -292,6 +300,17 @@ This MVP runs locally for a single user. The architecture is designed so each ph
 
 ---
 
+## Pitch Deck
+
+Two formats are included at the repo root:
+
+| File | Use |
+|---|---|
+| `VaultAI_Pitch_Deck.html` | Open in any browser — arrow keys to navigate, no internet needed |
+| `VaultAI_Pitch_Deck.pptx` | PowerPoint / Google Slides |
+
+---
+
 ## Key Rules
 
 - API keys live in `.env` only — never in code or commits
@@ -299,3 +318,4 @@ This MVP runs locally for a single user. The architecture is designed so each ph
 - PII masker runs on every CSV upload before any data reaches the agent — Claude never sees raw account numbers, emails, or phone numbers
 - Masked UIDs (e.g. `ACCT_001`) are swapped back to originals in the response before the user sees them
 - camelCase for all Python function names (project convention)
+- `memory/` directory is runtime-only — never committed to git

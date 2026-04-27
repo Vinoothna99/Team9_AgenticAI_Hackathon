@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultAI — Pitch Deck</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:      #0f172a;
+    --panel:   #1e293b;
+    --border:  #334155;
+    --green:   #10b981;
+    --green2:  #6ee7b7;
+    --white:   #f1f5f9;
+    --muted:   #94a3b8;
+    --yellow:  #fbbf24;
+    --red:     #f87171;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--white);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Deck container ── */
+  .deck {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 48px 64px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── Shared elements ── */
+  .accent-bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 5px;
+    background: var(--green);
+  }
+  .side-bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 10px; height: 100%;
+    background: var(--green);
+  }
+  .footer-band {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 52px;
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  h1 { font-size: clamp(32px, 5vw, 64px); font-weight: 800; }
+  h2 { font-size: clamp(22px, 3vw, 36px); font-weight: 700; color: var(--green); margin-bottom: 28px; margin-top: 14px; }
+  .subtitle { font-size: clamp(14px, 2vw, 20px); color: var(--muted); }
+  .tag { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+  /* ── Cards / panels ── */
+  .card {
+    background: var(--panel);
+    border-radius: 12px;
+    border-left: 4px solid var(--green);
+    padding: 18px 22px;
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+  .card-body {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── Grid helpers ── */
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; flex: 1; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; flex: 1; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+  .stack { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+
+  .pill {
+    display: inline-block;
+    background: #064e3b;
+    color: var(--green2);
+    border-radius: 999px;
+    padding: 2px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .pill-yellow { background: #451a03; color: var(--yellow); }
+
+  /* ── Layer row (architecture) ── */
+  .layer-row {
+    display: flex;
+    align-items: center;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 18px;
+    border-left: 4px solid var(--green);
+    gap: 14px;
+    flex: 1;
+  }
+  .layer-row.yellow { border-color: var(--yellow); }
+  .layer-name { font-weight: 700; font-size: 15px; flex: 0 0 200px; }
+  .layer-desc { font-size: 14px; color: var(--muted); }
+  .layer-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .badge-local { background: #064e3b; color: var(--green2); }
+  .badge-cloud { background: #451a03; color: var(--yellow); }
+
+  /* ── Tech stack column ── */
+  .stack-col {
+    background: var(--panel);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .stack-col-header {
+    background: var(--green);
+    color: #000;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 10px 16px;
+  }
+  .stack-col ul {
+    list-style: none;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .stack-col li { font-size: 14px; color: var(--muted); }
+  .stack-col li::before { content: "→ "; color: var(--green); font-weight: 700; }
+
+  /* ── Timeline step ── */
+  .step {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border-left: 4px solid var(--green);
+  }
+  .step.yellow { border-color: var(--yellow); }
+  .step-label {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--green);
+    flex: 0 0 120px;
+  }
+  .step.yellow .step-label { color: var(--yellow); }
+  .step-body { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+  /* ── Build phase row ── */
+  .phase-row {
+    display: flex;
+    align-items: center;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 14px 20px;
+    gap: 18px;
+    border-left: 4px solid var(--green);
+    flex: 1;
+  }
+  .phase-label { font-weight: 800; color: var(--green); flex: 0 0 90px; font-size: 16px; }
+  .phase-desc { font-size: 15px; color: var(--white); flex: 1; }
+  .check { color: var(--green); font-size: 20px; font-weight: 800; }
+
+  /* ── Roadmap row ── */
+  .roadmap-row {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 18px;
+    border-left: 4px solid var(--border);
+    flex: 1;
+  }
+  .roadmap-title { font-weight: 700; color: var(--green2); flex: 0 0 210px; font-size: 15px; }
+  .roadmap-desc { font-size: 14px; color: var(--muted); }
+
+  /* ── Nav controls ── */
+  #controls {
+    position: fixed;
+    bottom: 18px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+  }
+  #counter {
+    font-size: 13px;
+    color: var(--muted);
+    min-width: 56px;
+    text-align: center;
+  }
+  .nav-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--white);
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+  }
+  .nav-btn:hover { background: var(--border); }
+
+  /* ── Progress bar ── */
+  #progress {
+    position: fixed;
+    bottom: 0; left: 0;
+    height: 3px;
+    background: var(--green);
+    transition: width .35s ease;
+    z-index: 100;
+  }
+
+  /* ── Slide number dots ── */
+  #dots {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .dot.on { background: var(--green); }
+
+  /* ── Team badge ── */
+  .team-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 18px;
+    border-left: 4px solid var(--green);
+  }
+  .team-badge .name { font-weight: 700; font-size: 16px; }
+  .team-badge .role { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #064e3b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- ═══════════════════════════════════════════════════ SLIDE 1 — Title -->
+  <div class="slide active" id="s1">
+    <div class="side-bar"></div>
+    <div class="footer-band">Confidential — Judge Review Copy &nbsp;·&nbsp; Team VaultAI &nbsp;·&nbsp; Agentic AI Hackathon 2026</div>
+
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:40px;">
+      <div style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:3px; margin-bottom:16px;">Agentic AI Hackathon 2026</div>
+      <h1 style="color:var(--green); font-size:clamp(48px,8vw,96px); line-height:1;">VaultAI</h1>
+      <div style="font-size:clamp(18px,2.5vw,28px); color:var(--white); margin-top:16px; font-weight:300;">The Zero-Knowledge Wealth Copilot</div>
+      <div style="font-size:clamp(14px,1.6vw,19px); color:var(--muted); margin-top:12px; max-width:700px; line-height:1.6; font-style:italic;">
+        A local-first AI agent that manages your taxes, budget &amp; investments — your raw financial data is masked on-device before any AI ever sees it.
+      </div>
+
+      <div style="display:flex; gap:14px; margin-top:40px; flex-wrap:wrap;">
+        <div class="team-badge" style="flex:0 0 auto;">
+          <div class="avatar">A</div>
+          <div><div class="name">Akshanth Mamidala</div><div class="role">Backend Engineer</div></div>
+        </div>
+        <div class="team-badge" style="flex:0 0 auto;">
+          <div class="avatar">V</div>
+          <div><div class="name">Vinoothna Gangadasu</div><div class="role">Product Manager</div></div>
+        </div>
+        <div class="team-badge" style="flex:0 0 auto;">
+          <div class="avatar" style="background:#1e3a5f;">🤖</div>
+          <div><div class="name">Claude Sonnet 4.6</div><div class="role">Frontend Engineer</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 2 — Problem -->
+  <div class="slide" id="s2">
+    <div class="accent-bar"></div>
+    <h2>The Problem</h2>
+    <div class="stack">
+      <div class="card">
+        <div class="card-title">🔒 The Trust Gap</div>
+        <div class="card-body">People want AI to manage their money — but fear uploading raw bank statements to the cloud. One breach and your entire financial life is exposed. No one should have to choose between convenience and privacy.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🐟 Goldfish Memory</div>
+        <div class="card-body">AI financial bots forget you the moment you close the tab. Real planning needs 365 days of context — remembering you had a baby in February to surface a $2,000 tax credit in April.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Fragmented Tools</div>
+        <div class="card-body">Tax software, budgeting apps, and investment platforms don't talk to each other. You become the integration layer — copying numbers between tabs while your money sits idle.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SLIDE 3 — Solution -->
+  <div class="slide" id="s3">
+    <div class="accent-bar"></div>
+    <h2>The Solution</h2>
+    <div style="font-size:17px; color:var(--muted); margin-bottom:24px; font-style:italic;">A Family Office in your pocket — running entirely on your local machine.</div>
+    <div class="grid-3" style="flex:1;">
+      <div style="background:var(--panel); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="background:var(--green); padding:14px 18px; font-weight:800; font-size:17px; color:#000;">🛡️ Sanitizes Data</div>
+        <div style="padding:18px; font-size:15px; color:var(--muted); line-height:1.7; flex:1;">Strips PII before the AI sees anything. Account numbers, emails &amp; phone numbers become <code style="background:#0f172a; padding:2px 6px; border-radius:4px; color:var(--green2);">ACCT_001</code>, <code style="background:#0f172a; padding:2px 6px; border-radius:4px; color:var(--green2);">EMAIL_001</code> — locally, instantly, before any network call.</div>
+      </div>
+      <div style="background:var(--panel); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="background:var(--green); padding:14px 18px; font-weight:800; font-size:17px; color:#000;">🧠 Builds Memory</div>
+        <div style="padding:18px; font-size:15px; color:var(--muted); line-height:1.7; flex:1;">Extracts life events from casual chat and persists them to a local vault. SQLite for exact queries. ChromaDB for semantic recall. 365 days of context — never touching the cloud.</div>
+      </div>
+      <div style="background:var(--panel); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="background:var(--green); padding:14px 18px; font-weight:800; font-size:17px; color:#000;">⚡ Executes Strategy</div>
+        <div style="padding:18px; font-size:15px; color:var(--muted); line-height:1.7; flex:1;">Runs deterministic cash-flow forecasting, searches live tax codes via Tavily, and recommends exact financial actions with sources — like a CFO on demand.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ SLIDE 4 — Architecture -->
+  <div class="slide" id="s4">
+    <div class="accent-bar"></div>
+    <h2>System Architecture</h2>
+    <div class="stack">
+      <div class="layer-row">
+        <div class="layer-name" style="color:var(--green);">Layer 1: PII Masker</div>
+        <div class="layer-desc">Regex strips account numbers, emails, SSNs, phone numbers → stable UIDs. No network access.</div>
+        <div class="layer-badge badge-local">LOCAL</div>
+      </div>
+      <div style="text-align:center; color:var(--muted); font-size:18px;">↓ masked data only</div>
+      <div class="layer-row">
+        <div class="layer-name" style="color:var(--green2);">Layer 2: Memory Retrieval</div>
+        <div class="layer-desc">SQLite pulls life events &amp; conversation history. ChromaDB semantic recall finds relevant past context.</div>
+        <div class="layer-badge badge-local">LOCAL</div>
+      </div>
+      <div style="text-align:center; color:var(--muted); font-size:18px;">↓ context package (masked)</div>
+      <div class="layer-row yellow">
+        <div class="layer-name" style="color:var(--yellow);">Layer 3: LLM Agent</div>
+        <div class="layer-desc">Claude Haiku sees only masked data + context. Decides which tool to call. Raw data never reaches here.</div>
+        <div class="layer-badge badge-cloud">CLOUD ☁️</div>
+      </div>
+      <div style="text-align:center; color:var(--muted); font-size:18px;">↓ tool result</div>
+      <div class="layer-row">
+        <div class="layer-name" style="color:var(--green2);">Layer 4: Tool Execution</div>
+        <div class="layer-desc">Forecaster, memory writer run locally. Tavily is the only outbound exception — for live tax &amp; rate data.</div>
+        <div class="layer-badge badge-local">LOCAL*</div>
+      </div>
+      <div style="text-align:center; color:var(--muted); font-size:18px;">↓ de-mask → user</div>
+    </div>
+    <div style="font-size:12px; color:var(--muted); font-style:italic; margin-top:10px;">* Tavily search is the only outbound call besides the LLM itself.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 5 — Tech Stack -->
+  <div class="slide" id="s5">
+    <div class="accent-bar"></div>
+    <h2>Tech Stack</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px; flex:1;">
+      <div class="stack-col">
+        <div class="stack-col-header">Backend</div>
+        <ul>
+          <li>Python 3.11 + FastAPI</li>
+          <li>Claude Haiku (Anthropic)</li>
+          <li>Tavily API</li>
+          <li>Pandas (forecaster)</li>
+          <li>Docker Compose</li>
+          <li>python-multipart</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <div class="stack-col-header">Memory</div>
+        <ul>
+          <li>SQLite (life events,</li>
+          <li style="padding-left:12px; list-style:none; color:var(--muted);">  conversation history)</li>
+          <li>ChromaDB (vectors)</li>
+          <li>sentence-transformers</li>
+          <li style="padding-left:12px; list-style:none; color:var(--muted);">  all-MiniLM-L6-v2</li>
+          <li>SQLAlchemy ORM</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <div class="stack-col-header">Frontend</div>
+        <ul>
+          <li>React 19 + Vite</li>
+          <li>Tailwind CSS v4</li>
+          <li>React Router v7</li>
+          <li>Chat screen</li>
+          <li>Upload CSV screen</li>
+          <li>Dashboard screen</li>
+        </ul>
+      </div>
+      <div class="stack-col">
+        <div class="stack-col-header">Privacy</div>
+        <ul>
+          <li>Regex PII masker</li>
+          <li>ACCT, EMAIL, PHONE</li>
+          <li>SSN pattern stripping</li>
+          <li>UID lookup table</li>
+          <li>De-mask on response</li>
+          <li>Docker network isolation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 6 — Demo -->
+  <div class="slide" id="s6">
+    <div class="accent-bar"></div>
+    <h2>Demo: "The Time-Travel Scenario"</h2>
+    <div class="stack">
+      <div class="step">
+        <div class="step-label">January 📂</div>
+        <div class="step-body">User uploads their bank CSV. VaultAI masks PII locally in milliseconds — raw data never leaves the machine. Agent notices heavy tech-gear spending and asks: <em style="color:var(--white);">"Are you a freelancer? We can write this off."</em></div>
+      </div>
+      <div class="step yellow">
+        <div class="step-label">July 👶</div>
+        <div class="step-body">User chats: <em style="color:var(--white);">"I just had a baby girl!"</em> &nbsp; Agent silently writes <code style="background:#0f172a; padding:2px 6px; border-radius:4px; color:var(--green2);">{life_event: new_child, date: 2026-07}</code> to the local memory vault. No prompt, no form — just a conversation.</div>
+      </div>
+      <div class="step">
+        <div class="step-label">Tax Season 💰</div>
+        <div class="step-body">User says: <em style="color:var(--white);">"Prepare my taxes."</em> &nbsp; VaultAI retrieves the July memory → surfaces the <strong style="color:var(--green);">$2,000 Child Tax Credit</strong> automatically → runs the forecaster → finds <strong style="color:var(--green);">$5k surplus</strong> → confirms <strong style="color:var(--green);">T-Bills at 5% yield</strong> via Tavily → delivers a complete, sourced plan.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 7 — Build -->
+  <div class="slide" id="s7">
+    <div class="accent-bar"></div>
+    <h2>Build Progress — All Phases Complete ✅</h2>
+    <div class="stack">
+      <div class="phase-row">
+        <div class="phase-label">Phase 1</div>
+        <div class="phase-desc">FastAPI backend · Docker · <code>/chat</code> endpoint · <code>/health</code></div>
+        <div class="check">✅</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-label">Phase 2</div>
+        <div class="phase-desc">Tavily web search · Cash-flow forecaster (deterministic) · Claude tool-use loop</div>
+        <div class="check">✅</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-label">Phase 3</div>
+        <div class="phase-desc">SQLite + ChromaDB persistent memory · Life events · Conversation history · Semantic recall</div>
+        <div class="check">✅</div>
+      </div>
+      <div class="phase-row">
+        <div class="phase-label">Phase 4</div>
+        <div class="phase-desc">React frontend · CSV upload · PII masker · De-masking · Docker Compose full stack</div>
+        <div class="check">✅</div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap;">
+      <span class="pill">Python 3.11</span>
+      <span class="pill">FastAPI</span>
+      <span class="pill">Claude Haiku</span>
+      <span class="pill">ChromaDB</span>
+      <span class="pill">React 19</span>
+      <span class="pill">Tailwind v4</span>
+      <span class="pill">Docker</span>
+      <span class="pill">Tavily</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 8 — Privacy -->
+  <div class="slide" id="s8">
+    <div class="accent-bar"></div>
+    <h2>Privacy — Not a Policy, a Guarantee</h2>
+    <div class="stack">
+      <div class="card">
+        <div class="card-title">🔒 Raw data never leaves your machine</div>
+        <div class="card-body">The PII masker has no network access. Docker enforces isolation at the network layer — it is physically impossible for raw data to reach the cloud. This is architecture, not a promise.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔑 Stable UID mapping within a session</div>
+        <div class="card-body">"john.doe@gmail.com" always becomes EMAIL_001 for the duration of a session. The lookup table lives only in RAM — cleared when the server restarts. No persistence of PII anywhere.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">👁️ What Claude actually sees</div>
+        <div class="card-body">Only masked CSV text + your typed messages. No names, account numbers, phone numbers, SSNs, or email addresses ever reach the Anthropic API. UIDs are swapped back after Claude responds.</div>
+      </div>
+    </div>
+    <div style="margin-top:16px; padding:14px 18px; background:#064e3b; border-radius:10px; font-size:14px; color:var(--green2); font-style:italic;">
+      "The local-first architecture is our regulatory moat — we cannot comply with a data request for data we do not hold."
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 9 — Roadmap -->
+  <div class="slide" id="s9">
+    <div class="accent-bar"></div>
+    <h2>Roadmap to Scale</h2>
+    <div class="stack">
+      <div class="roadmap-row">
+        <div class="roadmap-title">Multi-device sync</div>
+        <div class="roadmap-desc">Optional encrypted cloud backup — server holds blobs it cannot read (client-side encryption). Privacy preserved at scale.</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-title">Multi-user</div>
+        <div class="roadmap-desc">Swap SQLite → PostgreSQL (one-line SQLAlchemy config change). Add auth layer. Architecture already supports it.</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-title">Better PII masking</div>
+        <div class="roadmap-desc">Replace regex with spaCy NLP model for name &amp; entity detection. Catch PII that patterns miss.</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-title">Zero-knowledge cloud</div>
+        <div class="roadmap-desc">PII masker runs in a sandboxed container with no network access — only masked context ever reaches any server.</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-title">Task execution</div>
+        <div class="roadmap-desc">Agent moves from giving advice → executing tasks: tax filing, investment allocation. Requires regulatory review.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 10 — Thank You -->
+  <div class="slide" id="s10">
+    <div class="side-bar"></div>
+    <div class="footer-band">github.com/Vinoothna99/Team9_AgenticAI_Hackathon</div>
+
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:40px;">
+      <h1 style="color:var(--green); font-size:clamp(48px,8vw,88px);">Thank You</h1>
+      <div style="font-size:clamp(20px,3vw,32px); color:var(--white); margin-top:16px; font-weight:300;">Questions?</div>
+      <div style="font-size:16px; color:var(--muted); margin-top:12px; font-style:italic;">VaultAI — local-first · zero-knowledge · always on your side</div>
+
+      <div style="display:flex; gap:14px; margin-top:48px; flex-wrap:wrap;">
+        <div class="team-badge" style="flex:0 0 auto;">
+          <div class="avatar">A</div>
+          <div><div class="name">Akshanth Mamidala</div><div class="role">Backend Engineer</div></div>
+        </div>
+        <div class="team-badge" style="flex:0 0 auto;">
+          <div class="avatar">V</div>
+          <div><div class="name">Vinoothna Gangadasu</div><div class="role">Product Manager</div></div>
+        </div>
+        <div class="team-badge" style="flex:0 0 auto;">
+          <div class="avatar" style="background:#1e3a5f;">🤖</div>
+          <div><div class="name">Claude Sonnet 4.6</div><div class="role">Frontend Engineer</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── Navigation ── -->
+<div id="progress"></div>
+<div id="dots"></div>
+<div id="controls">
+  <button class="nav-btn" id="btnPrev">‹</button>
+  <span id="counter">1 / 10</span>
+  <button class="nav-btn" id="btnNext">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  const dotsEl    = document.getElementById('dots');
+  const counterEl = document.getElementById('counter');
+  const progressEl= document.getElementById('progress');
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' on' : '');
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit');
+    setTimeout(() => slides[cur < n ? cur : cur].classList.remove('exit'), 400);
+
+    const prev = cur;
+    cur = Math.max(0, Math.min(total - 1, n));
+
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('exit');
+    setTimeout(() => slides[prev].classList.remove('exit'), 400);
+
+    slides[cur].classList.add('active');
+
+    counterEl.textContent = `${cur + 1} / ${total}`;
+    progressEl.style.width = `${((cur + 1) / total) * 100}%`;
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('on', i === cur));
+  }
+
+  document.getElementById('btnNext').addEventListener('click', () => goTo(cur + 1));
+  document.getElementById('btnPrev').addEventListener('click', () => goTo(cur - 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(cur + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); goTo(cur - 1); }
+  });
+
+  // Init progress bar
+  progressEl.style.width = `${(1 / total) * 100}%`;
+</script>
+</body>
+</html>

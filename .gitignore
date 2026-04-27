@@ -32,9 +32,10 @@ build/
 *.log
 logs/
 
-# Local vector DB / memory artifacts
+# Runtime memory data (auto-generated, never commit)
+memory/vault.db
+memory/chromadb/
 memory_vault/
-*.db
 *.sqlite
 chroma_db/
 

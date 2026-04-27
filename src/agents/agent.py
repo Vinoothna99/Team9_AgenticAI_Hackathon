@@ -74,11 +74,12 @@ def dispatchTool(toolName, toolInput):
             return "No CSV uploaded yet. Please upload a bank statement first."
         return forecast(csv_text)
     if toolName == "saveLifeEvent":
-          return saveLifeEvent(
-            toolInput["eventType"],                                                                                                                                                                            
+        return saveLifeEvent(
+            toolInput["eventType"],
             toolInput["detail"],
-            toolInput["date"]                                                                                                                                                                                
-          ) 
+            toolInput["date"]
+        )
+    return f"Unknown tool: {toolName}"
 
 def runAgent(message:str) -> str:
     history = getRecentHistory(10)
