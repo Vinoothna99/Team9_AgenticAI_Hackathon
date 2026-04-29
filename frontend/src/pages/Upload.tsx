@@ -16,10 +16,9 @@ export default function Upload() {
     }
     setError(null)
     setStatus('masking')
-
     await new Promise((r) => setTimeout(r, 600))
-
     setStatus('uploading')
+
     const form = new FormData()
     form.append('file', file)
 
@@ -35,59 +34,80 @@ export default function Upload() {
     }
   }
 
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) handleFile(file)
+  const statusMessage: Record<Status, string> = {
+    idle: 'Click to select a CSV file',
+    masking: 'Masking sensitive data...',
+    uploading: 'Uploading...',
+    done: '',
+    error: '',
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Upload Bank Statement</h1>
-      <p className="text-slate-400 text-sm">
-        Export your bank statement as a CSV and drop it below. Your data stays local — it never
-        leaves this device.
-      </p>
+    <div className="flex flex-col items-center gap-8 py-12">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-slate-100">Upload CSV</h2>
+        <p className="text-slate-400 text-sm mt-2">
+          Your data is private. PII is masked before any AI sees it.
+        </p>
+      </div>
 
+      {/* Drop zone */}
       <div
-        onDrop={onDrop}
-        onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-slate-700 rounded-xl p-16 text-center cursor-pointer hover:border-emerald-500 transition-colors"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault()
+          const file = e.dataTransfer.files[0]
+          if (file) handleFile(file)
+        }}
+        className="w-full max-w-md border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-xl p-12 flex flex-col items-center gap-3 cursor-pointer transition-colors"
       >
+        <span className="text-4xl">📂</span>
+        <p className="text-slate-400 text-sm text-center">
+          {status === 'idle' || status === 'error'
+            ? 'Drag & drop a CSV here or click to browse'
+            : statusMessage[status]}
+        </p>
         <input
           ref={inputRef}
           type="file"
           accept=".csv"
           className="hidden"
           onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) handleFile(f)
+            const file = e.target.files?.[0]
+            if (file) handleFile(file)
           }}
         />
-        <p className="text-slate-400 text-sm">Drag and drop a CSV here, or click to browse</p>
       </div>
 
-      {status === 'masking' && (
-        <div className="flex items-center gap-2 text-sm text-amber-400">
-          <span className="animate-spin inline-block">⟳</span>
-          Masking locally... your raw data stays on this device.
+      {/* Loading states */}
+      {(status === 'masking' || status === 'uploading') && (
+        <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+          {statusMessage[status]}
         </div>
       )}
-      {status === 'uploading' && (
-        <p className="text-sm text-slate-400 animate-pulse">Sending to local agent...</p>
-      )}
+
+      {/* Success */}
       {status === 'done' && rowCount !== null && (
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-emerald-700 text-white text-xs px-3 py-1 font-medium">
-            Loaded
-          </span>
-          <span className="text-slate-300 text-sm">
-            {rowCount} transactions ready. Go to Chat to analyze them.
-          </span>
+        <div className="bg-emerald-950 border border-emerald-800 rounded-xl px-6 py-4 text-center">
+          <p className="text-emerald-400 font-semibold text-lg">{rowCount} rows uploaded</p>
+          <p className="text-slate-400 text-sm mt-1">
+            Your data is private and stored securely. Go to{' '}
+            <a href="/chat" className="text-emerald-400 hover:underline">
+              Chat
+            </a>{' '}
+            to ask questions about it.
+          </p>
         </div>
       )}
-      {status === 'error' && <p className="text-red-400 text-sm">{error}</p>}
+
+      {/* Error */}
+      {status === 'error' && error && (
+        <div className="bg-red-950 border border-red-800 rounded-xl px-6 py-4 text-center">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      )}
     </div>
   )
 }

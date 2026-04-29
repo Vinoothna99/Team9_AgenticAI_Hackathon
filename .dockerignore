@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+memory/chromadb/
+memory/vault.db
+frontend/node_modules/
+frontend/.vite/
+.git/
+*.md

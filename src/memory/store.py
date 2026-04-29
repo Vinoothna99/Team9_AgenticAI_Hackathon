@@ -3,6 +3,7 @@ import uuid
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from datetime import datetime
+from dateutil import parser as dateparser
 
 conn = sqlite3.connect("memory/vault.db", check_same_thread = False) # to disanble  FastAPI running multiple thread
 
@@ -39,7 +40,14 @@ embed_fn = SentenceTransformerEmbeddingFunction(model_name = "all-MiniLM-L6-v2")
 chroma = chromadb.PersistentClient(path = "./memory/chromadb") # writes to disk at ./memory/chroma_db. Survives Docker restarts.
 conversations = chroma.get_or_create_collection("conversations",embedding_function=embed_fn)
 
+def normalizeDate(date: str) -> str:
+    try:
+        return dateparser.parse(date, default=datetime(2000, 1, 1)).strftime("%Y-%m-%d")
+    except Exception:
+        return date
+
 def saveLifeEvent(eventType: str, detail: str, date : str) -> str:
+    date = normalizeDate(date)
     eventId = str(uuid.uuid4())
     conn.execute(
         "INSERT INTO lifeEvents(id,eventType,detail,date) VALUES (?,?,?,?)", (eventId,eventType,detail,date)

@@ -20,8 +20,13 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
+
+    /* Path aliases */
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src"]
 }

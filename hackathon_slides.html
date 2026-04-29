@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VaultAI — Team 9</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 80px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      text-align: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Typography */
+    .eyebrow {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #34d399;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; color: #f8fafc; }
+    h2 { font-size: 2.2rem; font-weight: 700; color: #f1f5f9; margin-bottom: 32px; }
+    h3 { font-size: 1.1rem; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+
+    .accent { color: #34d399; }
+    .sub { font-size: 1.2rem; color: #94a3b8; margin-top: 16px; max-width: 600px; line-height: 1.6; }
+    .label { font-size: 0.85rem; color: #64748b; margin-top: 32px; letter-spacing: 0.05em; }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .cards.col2 { grid-template-columns: 1fr 1fr; }
+    .cards.col3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .card {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: left;
+    }
+
+    .card .icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .card p { font-size: 0.9rem; color: #94a3b8; line-height: 1.6; margin-top: 6px; }
+
+    /* Architecture flow */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .flow-step {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 14px 28px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .flow-step .num {
+      background: #2563eb;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .flow-step .title { font-weight: 600; font-size: 0.95rem; color: #f1f5f9; }
+    .flow-step .desc { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+
+    .flow-arrow {
+      color: #334155;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 2px 0;
+    }
+
+    /* Table */
+    table { width: 100%; max-width: 800px; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: #1a2035; color: #7dd3fc; padding: 12px 16px; text-align: left; border-bottom: 1px solid #2d3748; }
+    td { padding: 12px 16px; border-bottom: 1px solid #1e2330; color: #cbd5e1; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Problem/solution pairs */
+    .ps-list { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 16px; }
+    .ps-item {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 18px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      text-align: left;
+    }
+    .ps-item .problem { color: #f87171; font-size: 0.88rem; line-height: 1.5; }
+    .ps-item .solution { color: #34d399; font-size: 0.88rem; line-height: 1.5; }
+    .ps-item .ps-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 700; }
+    .ps-item .problem .ps-label { color: #f87171; }
+    .ps-item .solution .ps-label { color: #34d399; }
+
+    /* Tradeoffs */
+    .tradeoff-list { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 12px; }
+    .tradeoff {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      text-align: left;
+    }
+    .tradeoff .decision { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; min-width: 220px; }
+    .tradeoff .why { font-size: 0.85rem; color: #94a3b8; line-height: 1.5; }
+
+    /* Demo slide */
+    .demo-flow {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 800px;
+    }
+    .demo-step {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 20px 24px;
+      text-align: center;
+      min-width: 160px;
+    }
+    .demo-step .icon { font-size: 2rem; margin-bottom: 8px; }
+    .demo-step p { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
+    .demo-arrow { color: #334155; font-size: 1.5rem; }
+
+    /* Nav */
+    .nav {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-size: 0.8rem;
+      color: #64748b;
+      z-index: 100;
+    }
+
+    .nav button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .nav button:hover { background: #2d3748; color: #f1f5f9; }
+    .nav .counter { color: #475569; }
+
+    /* Progress bar */
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: #34d399;
+      transition: width 0.3s ease;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active">
+    <div class="eyebrow">Team 9 — Agentic AI Hackathon</div>
+    <h1>Vault<span class="accent">AI</span></h1>
+    <p class="sub">Your AI-powered financial assistant.<br/>Raw data never leaves your machine.</p>
+    <p class="label">↑ Use arrow keys or click to navigate</p>
+  </div>
+
+  <!-- SLIDE 2: The Problem -->
+  <div class="slide">
+    <h2>The Problem</h2>
+    <div class="cards col2" style="max-width:800px;">
+      <div class="card">
+        <div class="icon">🔓</div>
+        <h3>The Trust Gap</h3>
+        <p>People want AI to help with their finances — but uploading raw bank statements to the cloud means handing your most sensitive data to a third party.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🐟</div>
+        <h3>Goldfish Memory</h3>
+        <p>Current AI assistants forget everything when you close the tab. Real financial planning requires months of context — your life events, income history, and goals.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: The Solution -->
+  <div class="slide">
+    <h2>The Solution</h2>
+    <div class="cards col3" style="max-width:900px;">
+      <div class="card">
+        <div class="icon">🔒</div>
+        <h3>Private by architecture</h3>
+        <p>PII is masked locally before any data reaches the cloud. The LLM only reasons on sanitized data — never raw account numbers or personal info.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🧠</div>
+        <h3>Persistent memory</h3>
+        <p>SQLite stores structured history. ChromaDB enables semantic recall. Ask about a tax credit in April — it surfaces the relevant event from months ago.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔍</div>
+        <h3>Live context</h3>
+        <p>Tavily search brings in real-time market data, tax codes, and interest rates — grounding the AI in current reality, not training data.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: How It Works -->
+  <div class="slide">
+    <h2>How It Works</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="num">1</div>
+        <div>
+          <div class="title">PII Masker <span style="color:#64748b;font-weight:400;font-size:0.8rem;">— local, no network</span></div>
+          <div class="desc">Strips SSN, email, phone, account numbers. Replaces with UIDs (ACCT_001, SSN_001).</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="num">2</div>
+        <div>
+          <div class="title">Memory Retrieval <span style="color:#64748b;font-weight:400;font-size:0.8rem;">— local, no network</span></div>
+          <div class="desc">SQLite pulls recent history. ChromaDB finds semantically similar past context.</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="num">3</div>
+        <div>
+          <div class="title">LLM Agent <span style="color:#64748b;font-weight:400;font-size:0.8rem;">— cloud, masked data only</span></div>
+          <div class="desc">Claude Haiku reasons on sanitized context. Decides which tool to call.</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="num">4</div>
+        <div>
+          <div class="title">Tool Execution</div>
+          <div class="desc">forecast_cashflow (local) · search_web (Tavily) · save_life_event (local)</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="num">5</div>
+        <div>
+          <div class="title">De-masking <span style="color:#64748b;font-weight:400;font-size:0.8rem;">— local</span></div>
+          <div class="desc">UIDs swapped back to original values before the user reads the response.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: Tech Stack -->
+  <div class="slide">
+    <h2>Tech Stack</h2>
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Backend</td><td>FastAPI + Python 3.11</td><td>Async, lightweight, auto-docs</td></tr>
+        <tr><td>Frontend</td><td>React 19 + Vite + Tailwind v4</td><td>Fast builds, component-based</td></tr>
+        <tr><td>Agent</td><td>Claude Haiku (Anthropic SDK)</td><td>Tool use, fast, cost-efficient</td></tr>
+        <tr><td>Memory</td><td>SQLite + ChromaDB</td><td>Structured + semantic recall</td></tr>
+        <tr><td>Embeddings</td><td>sentence-transformers (local)</td><td>No API call, no data leaves</td></tr>
+        <tr><td>Search</td><td>Tavily</td><td>Real-time financial data</td></tr>
+        <tr><td>Containers</td><td>Docker + Docker Compose</td><td>One command to run everything</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SLIDE 6: Problems We Solved -->
+  <div class="slide">
+    <h2>Problems We Solved</h2>
+    <div class="ps-list">
+      <div class="ps-item">
+        <div class="problem"><div class="ps-label">Problem</div>Docker build took 30+ minutes. sentence-transformers silently pulled 2GB CUDA PyTorch.</div>
+        <div class="solution"><div class="ps-label">Solution</div>Pre-install CPU-only torch before requirements.txt. Build time: 30 min → 5 min.</div>
+      </div>
+      <div class="ps-item">
+        <div class="problem"><div class="ps-label">Problem</div>Build context was 670MB. Docker was copying the entire venv/ folder on every build.</div>
+        <div class="solution"><div class="ps-label">Solution</div>Added .dockerignore to exclude venv/, chromadb/, node_modules/. Context: 670MB → 78KB.</div>
+      </div>
+      <div class="ps-item">
+        <div class="problem"><div class="ps-label">Problem</div>Date formats were inconsistent in SQLite — "April 2026", "04/24/2026", "2026-04-27" mixed together. Sort order was wrong.</div>
+        <div class="solution"><div class="ps-label">Solution</div>normalizeDate() with dateutil.parser standardizes all dates to YYYY-MM-DD before saving.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: Tradeoffs -->
+  <div class="slide">
+    <h2>Tradeoffs</h2>
+    <div class="tradeoff-list">
+      <div class="tradeoff">
+        <div class="decision">SQLite over PostgreSQL</div>
+        <div class="why">Zero setup, embedded, no extra container. Tradeoff: no concurrent writes. Acceptable for a single-user local app.</div>
+      </div>
+      <div class="tradeoff">
+        <div class="decision">In-memory CSV session</div>
+        <div class="why">Fast and simple — CSV lives in a Python dict. Tradeoff: lost on server restart. Fine for a demo.</div>
+      </div>
+      <div class="tradeoff">
+        <div class="decision">CPU-only PyTorch</div>
+        <div class="why">Docker image is ~8GB lighter. Builds 6x faster. Tradeoff: slower embeddings. Adequate for short text on a local machine.</div>
+      </div>
+      <div class="tradeoff">
+        <div class="decision">Naive cash flow forecast</div>
+        <div class="why">Next month = this month's net. Fully deterministic — no LLM in the math. Tradeoff: not sophisticated. Benefit: zero hallucination risk on financial numbers.</div>
+      </div>
+      <div class="tradeoff">
+        <div class="decision">Local embeddings</div>
+        <div class="why">all-MiniLM-L6-v2 runs on device. No embedding API cost, no data sent out. Tradeoff: slightly lower quality than hosted models.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Demo -->
+  <div class="slide">
+    <h2>Demo Flow</h2>
+    <div class="demo-flow">
+      <div class="demo-step">
+        <div class="icon">📂</div>
+        <h3>Upload CSV</h3>
+        <p>Bank statement dropped in. PII masked locally.</p>
+      </div>
+      <div class="demo-arrow">→</div>
+      <div class="demo-step">
+        <div class="icon">💬</div>
+        <h3>Ask Anything</h3>
+        <p>"What are my top expenses?" "Forecast next month."</p>
+      </div>
+      <div class="demo-arrow">→</div>
+      <div class="demo-step">
+        <div class="icon">🧠</div>
+        <h3>AI Responds</h3>
+        <p>Agent uses tools. Memory recalled. Response de-masked.</p>
+      </div>
+      <div class="demo-arrow">→</div>
+      <div class="demo-step">
+        <div class="icon">🔒</div>
+        <h3>Raw data: local</h3>
+        <p>Your numbers never left the machine.</p>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:36px;">
+      <code style="background:#1e2330;padding:6px 14px;border-radius:6px;font-size:1rem;color:#34d399;">docker compose up --build</code>
+      &nbsp;→&nbsp;
+      <code style="background:#1e2330;padding:6px 14px;border-radius:6px;font-size:1rem;color:#94a3b8;">localhost:3000</code>
+    </p>
+  </div>
+
+  <!-- SLIDE 9: Thank You -->
+  <div class="slide">
+    <div class="eyebrow">Team 9 — Agentic AI Hackathon</div>
+    <h1>Thank <span class="accent">You</span></h1>
+    <p class="sub">VaultAI — privacy-first financial AI.<br/>Raw data stays local. Intelligence comes to you.</p>
+    <div style="margin-top:48px;display:flex;gap:32px;justify-content:center;flex-wrap:wrap;">
+      <div style="background:#1e2330;border:1px solid #2d3748;border-radius:10px;padding:16px 28px;font-size:0.85rem;color:#94a3b8;">
+        🔒 PII never reaches the cloud
+      </div>
+      <div style="background:#1e2330;border:1px solid #2d3748;border-radius:10px;padding:16px 28px;font-size:0.85rem;color:#94a3b8;">
+        🧠 365-day persistent memory
+      </div>
+      <div style="background:#1e2330;border:1px solid #2d3748;border-radius:10px;padding:16px 28px;font-size:0.85rem;color:#94a3b8;">
+        🔍 Live market data via Tavily
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prev">←</button>
+  <span class="counter" id="counter">1 / 9</span>
+  <button id="next">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide')
+  const counter = document.getElementById('counter')
+  const progress = document.getElementById('progress')
+  let current = 0
+
+  function goTo(n) {
+    slides[current].classList.remove('active')
+    current = Math.max(0, Math.min(n, slides.length - 1))
+    slides[current].classList.add('active')
+    counter.textContent = `${current + 1} / ${slides.length}`
+    progress.style.width = `${((current + 1) / slides.length) * 100}%`
+  }
+
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1))
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1))
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1)
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goTo(current - 1)
+  })
+
+  goTo(0)
+</script>
+</body>
+</html>

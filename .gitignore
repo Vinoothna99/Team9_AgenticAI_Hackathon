@@ -37,6 +37,8 @@ memory_vault/
 *.db
 *.sqlite
 chroma_db/
+memory/chromadb/
+memory/vault.db
 
 # Docker
 .docker/

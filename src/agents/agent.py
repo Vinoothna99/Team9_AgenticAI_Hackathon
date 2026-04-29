@@ -91,13 +91,28 @@ def runAgent(message:str) -> str:
     if similar:
         memoryContext += f"\n\nRelevant past context:\n" + "\n".join(similar) 
 
+    csv_status = ""
+    if csvSession.get("csv_text"):
+        row_count = csvSession.get("row_count", 0)
+        csv_status = (
+            f"\n\nA bank statement CSV with {row_count} rows has been uploaded this session. "
+            "Use the forecast tool to answer questions about spending, income, budget, or cash flow."
+        )
+
+    system_prompt = (
+        "You are VaultAI, a personal financial copilot. "
+        "You help users understand their finances, plan for taxes, and make smart investment decisions."
+        + csv_status
+        + memoryContext
+    )
+
     messages = [{"role": "user", "content": message}]
 
     while True:
-        response = client.messages.create(                                                                                                                                      
-              model="claude-haiku-4-5-20251001",            
+        response = client.messages.create(
+              model="claude-haiku-4-5-20251001",
               max_tokens=4096,
-              system=("You are VaultAI, a personal financial copilot. You help users understand their finances, plan for taxes, and make smart investment decisions." + memoryContext),
+              system=system_prompt,
               tools=tools,                                                                                                                                                        
               messages=messages,                                                                                                                                                  
         )                                                                                                                                                                       
